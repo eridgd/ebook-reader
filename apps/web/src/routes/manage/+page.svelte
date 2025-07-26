@@ -649,7 +649,6 @@
     const tasks: Promise<void>[] = [];
 
     let failed = 0;
-    let skipped = 0;
     let succeeded = 0;
 
     replicationProgress$.next({ progressBase: 1, maxProgress: bookIds.length });
@@ -664,18 +663,10 @@
             replicationProgress$.next({ progressToAdd: 1 });
             succeeded += 1;
           } catch (error: any) {
-            // Check if this is a skip error first
-            if (error.message?.includes('already has furigana') || error.isSkip) {
-              // This is not a real error, just a skip
-              replicationProgress$.next({ progressToAdd: 1 });
-              skipped += 1;
-            } else {
-              // Handle actual errors
-              handleErrorDuringReplication(error, `Error on adding furigana to book ${bookId}: `, [
-                limiter
-              ]);
-              failed += 1;
-            }
+            handleErrorDuringReplication(error, `Error on adding furigana to book ${bookId}: `, [
+              limiter
+            ]);
+            failed += 1;
           }
         })
       );
@@ -690,16 +681,12 @@
     if (succeeded > 0) {
       message += `✅ Successfully added furigana to ${pluralize(succeeded, 'book')}. `;
     }
-    if (skipped > 0) {
-      message += `⏭️ Skipped ${pluralize(skipped, 'book')} (already had furigana). `;
-    }
     if (failed > 0) {
       message += `❌ Failed to add furigana to ${pluralize(failed, 'book')}.`;
     }
 
     if (message) {
       const title = failed > 0 ? 'Furigana Addition Results' : 'Furigana Addition Complete';
-      const messageType = failed > 0 ? 'error' : 'success';
 
       if (failed > 0) {
         showError(title, message, message);
