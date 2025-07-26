@@ -18,12 +18,23 @@ import { getValueSync } from '$lib/functions/rxjs/get-value-sync';
 // Simple browser-compatible path utility
 const path = {
   join: (...parts: string[]) => {
-    return parts
-      .map((part, index) => {
-        if (index === 0) return part.replace(/\/+$/, '');
+    if (parts.length === 0) return '.';
+
+    // Filter out empty parts and '.' parts, except when it's the only part
+    const filteredParts = parts.filter((part, _index) => {
+      if (part === '.' && parts.length > 1) return false; // Skip '.' when there are other parts
+      return part && part.length > 0;
+    });
+
+    if (filteredParts.length === 0) return '.';
+    if (filteredParts.length === 1) return filteredParts[0];
+
+    return filteredParts
+      .map((part, _index) => {
+        // For all parts, remove leading and trailing slashes
         return part.replace(/^\/+|\/+$/g, '');
       })
-      .filter((part) => part.length > 0)
+      .filter((part) => part.length > 0) // Remove any empty parts after cleaning
       .join('/');
   },
   dirname: (filePath: string) => {
