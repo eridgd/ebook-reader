@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "cd apps/web && pnpm dev",
-    "build": "cd apps/web && pnpm build",
+    "build": "cd apps/web && pnpm build && cp ../../server.py .",
     "prepare": "husky",
     "check": "eslint --fix-dry-run .",
     "check:pretty": "prettier --debug-check .",
