@@ -756,7 +756,7 @@
 />
 
 <style lang="scss">
-  @import '../styles';
+  @use '../styles';
 
   .book-content {
     :global(svg),

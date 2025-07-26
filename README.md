@@ -10,6 +10,7 @@ An online e-book reader that supports dictionary extensions like Yomitan, which 
 
 - [x] Supports HTMLZ, Plain Text and EPUB files
 - [x] Customizable environment (e. g. themes, font size, image blur, furigana settings etc.)
+- [x] **Automatic Furigana Generation** - Adds hiragana readings above kanji characters using advanced Japanese morphological analysis
 - [x] Continuous / Pagination reader mode
 - [x] Vertical / Horizontal reading mode
 - [x] Basic Time/Character and Reading Goals Tracker
@@ -21,6 +22,35 @@ An online e-book reader that supports dictionary extensions like Yomitan, which 
 - [x] Book manager
 - [x] Data import/export via local and external sources
 - [x] Installation and offline capabilities
+
+# Furigana Support
+
+ッツ Ebook Reader features advanced automatic furigana generation that adds hiragana readings above kanji characters to help with reading comprehension. This feature is particularly useful for Japanese language learners and readers encountering unfamiliar kanji.
+
+## How Furigana Works
+
+- **Automatic Detection**: The system automatically detects Japanese text containing kanji characters
+- **Morphological Analysis**: Uses [kuromoji.js](https://www.npmjs.com/package/@patdx/kuromoji) for accurate Japanese text tokenization
+- **Smart Processing**: Only adds furigana to kanji-containing words, leaving hiragana and katakana unchanged
+- **Ruby Markup**: Generates proper HTML `<ruby><rt>` tags for clean furigana display
+- **One-time Processing**: Furigana is added during book import for optimal performance
+
+## Enabling Furigana
+
+1. **Go to Settings**: Click the settings icon in the reader or book manager
+2. **Find Furigana Settings**: Look for "Automatically Add Furigana" option
+3. **Enable the Feature**: Toggle the setting to automatically process new books
+4. **Import Books**: Newly imported Japanese EPUB or text files will have furigana added automatically
+
+## Furigana Features
+
+- **Kanji Detection**: Automatically identifies kanji characters (一-龯) that need readings
+- **Hiragana Conversion**: Converts katakana readings to hiragana for consistency
+- **Performance Optimized**: Uses CDN-based dictionaries for fast loading
+- **Browser Compatible**: Modern Promise-based implementation works in all modern browsers
+- **No Local Storage**: Dictionary files are loaded from CDN, saving local storage space
+
+**Note**: Furigana generation requires an internet connection for the initial dictionary loading. Once loaded, the system works offline for the current session.
 
 # Usage
 
