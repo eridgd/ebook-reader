@@ -12,7 +12,7 @@ const config = {
   plugins: [sveltekit()],
   ssr: {
     // https://github.com/FortAwesome/Font-Awesome/issues/18677
-    noExternal: ['@fortawesome/*', '@popperjs/*', '@sglkc/kuromoji']
+    noExternal: ['@fortawesome/*', '@popperjs/*', '@patdx/kuromoji']
   },
   experimental: {
     prebundleSvelteLibraries: true
@@ -21,7 +21,7 @@ const config = {
     global: 'globalThis'
   },
   optimizeDeps: {
-    include: ['@sglkc/kuromoji'],
+    include: ['@patdx/kuromoji'],
     force: true
   },
   server: {
