@@ -25,7 +25,7 @@ An online e-book reader that supports dictionary extensions like Yomitan, which 
 
 # Furigana Support
 
-ッツ Ebook Reader features advanced automatic furigana generation that adds hiragana readings above kanji characters to help with reading comprehension. This feature is particularly useful for Japanese language learners and readers encountering unfamiliar kanji.
+ッツ Ebook Reader features advanced automatic and manual furigana generation that adds hiragana readings above kanji characters to help with reading comprehension. This feature is particularly useful for Japanese language learners and readers encountering unfamiliar kanji.
 
 ## How Furigana Works
 
@@ -37,10 +37,21 @@ An online e-book reader that supports dictionary extensions like Yomitan, which 
 
 ## Enabling Furigana
 
+### Automatic Furigana (New Books)
+
 1. **Go to Settings**: Click the settings icon in the reader or book manager
 2. **Find Furigana Settings**: Look for "Automatically Add Furigana" option
 3. **Enable the Feature**: Toggle the setting to automatically process new books
 4. **Import Books**: Newly imported Japanese EPUB or text files will have furigana added automatically
+
+### Manual Furigana (Existing Books)
+
+1. **Open Book Manager**: Click the book manager icon in the reader
+2. **Select Books**: Choose one or more books that need furigana
+3. **Click Language Icon**: Use the language icon (🌐) in the manager header to add furigana
+4. **Processing**: The system will process and replace any existing furigana with fresh analysis
+
+**Note**: Manual furigana processing always replaces existing furigana content, ensuring you get the most up-to-date analysis.
 
 ## Furigana Features
 
@@ -49,6 +60,8 @@ An online e-book reader that supports dictionary extensions like Yomitan, which 
 - **Performance Optimized**: Uses CDN-based dictionaries for fast loading
 - **Browser Compatible**: Modern Promise-based implementation works in all modern browsers
 - **No Local Storage**: Dictionary files are loaded from CDN, saving local storage space
+- **Batch Processing**: Process multiple books at once with progress tracking
+- **Smart Replacement**: Manual processing refreshes existing furigana with current analysis
 
 **Note**: Furigana generation requires an internet connection for the initial dictionary loading. Once loaded, the system works offline for the current session.
 
@@ -165,6 +178,7 @@ You may find the following controls in the manager:
 | ![Icon](assets/readme/control-export.svg)                      | Opens the export menu for the selected books                                   |
 | ![Icon](assets/readme/control-reader-statistics.svg)           | Opens the statistics tab (filtered by selected books if any)                   |
 | ![Icon](assets/readme/control-statistics-filter-range-off.svg) | Deletes statistics of selected books                                           |
+| 🌐                                                             | Adds furigana to selected books (replaces existing furigana)                   |
 | ![Icon](assets/readme/control-cancel.svg)                      | Cancels the current book operation                                             |
 
 # Reading Tracker
