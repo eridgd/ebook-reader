@@ -5,6 +5,7 @@
  */
 
 import * as kuromoji from '@patdx/kuromoji';
+import { ReplicationSaveBehavior } from '$lib/functions/replication/replication-options';
 
 // Singleton pattern to ensure the tokenizer is built only once.
 let tokenizer: Awaited<ReturnType<kuromoji.TokenizerBuilder['build']>> | null = null;
@@ -148,6 +149,56 @@ const furiganaService = {
     } catch (error) {
       console.error('Furigana service: Error tokenizing text:', error);
       return text;
+    }
+  },
+
+  // Checks if HTML content already contains furigana markup
+  hasExistingFurigana(html: string): boolean {
+    return /<ruby[^>]*>/i.test(html) || /<rt[^>]*>/i.test(html);
+  },
+
+  // Adds furigana to an existing book by ID
+  async addFuriganaToBook(bookId: number): Promise<void> {
+    try {
+      // Import database dynamically to avoid circular dependencies
+      const { database } = await import('$lib/data/store');
+
+      // Get the book data
+      const bookData = await database.getData(bookId);
+      if (!bookData) {
+        throw new Error(`Book with ID ${bookId} not found`);
+      }
+
+      // Check if furigana already exists
+      if (this.hasExistingFurigana(bookData.elementHtml)) {
+        console.log(`Furigana service: Book "${bookData.title}" already has furigana, skipping`);
+        return;
+      }
+
+      console.log(
+        `Furigana service: Processing book "${bookData.title}" (${bookData.elementHtml.length} chars)`
+      );
+
+      // Process the HTML content
+      const processedHtml = await this.addFuriganaToHtml(bookData.elementHtml);
+
+      // Create updated book data
+      const updatedBookData = {
+        ...bookData,
+        elementHtml: processedHtml,
+        lastBookModified: Date.now()
+      };
+
+      // Remove the ID for upsertData
+      const { id: _id, ...dataWithoutId } = updatedBookData;
+
+      // Save the updated book data
+      await database.upsertData(dataWithoutId, ReplicationSaveBehavior.Overwrite, false, false);
+
+      console.log(`Furigana service: ✅ Successfully added furigana to "${bookData.title}"`);
+    } catch (error) {
+      console.error(`Furigana service: ❌ Failed to add furigana to book ${bookId}:`, error);
+      throw error;
     }
   }
 };

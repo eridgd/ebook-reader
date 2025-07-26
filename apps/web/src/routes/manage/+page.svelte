@@ -19,11 +19,12 @@
   import { getStorageHandler } from '$lib/data/storage/storage-handler-factory';
   import { StorageKey } from '$lib/data/storage/storage-types';
   import { storageSource$ } from '$lib/data/storage/storage-view';
+  import furiganaService from '$lib/functions/furigana-service';
+  import { database } from '$lib/data/store';
   import {
     booklistSortOptions$,
     cacheStorageData$,
     confirmStatisticsDeletion$,
-    database,
     fileCountData$,
     isOnline$,
     keepLocalStatisticsOnDeletion$,
@@ -41,7 +42,7 @@
   import { keyBy } from '$lib/functions/key-by';
   import { handleErrorDuringReplication } from '$lib/functions/replication/error-handler';
   import { importBackup, importData, replicateData } from '$lib/functions/replication/replicator';
-  import { throwIfAborted } from '$lib/functions/replication/replication-error';
+  import { throwIfAborted } from '$lib/functions/replication/replicator';
   import {
     replicationProgress$,
     executeReplicate$,
@@ -635,6 +636,52 @@
     reduceToEmptyString()
   );
 
+  async function addFuriganaToBooks(bookIds: number[]) {
+    if (!operationAllowed()) {
+      return;
+    }
+
+    cancelTooltip = `Cancels the current Process`;
+
+    initializeReplicationProgressData();
+
+    const limiter = pLimit(1);
+    const tasks: Promise<void>[] = [];
+
+    let failed = 0;
+
+    replicationProgress$.next({ progressBase: 1, maxProgress: bookIds.length });
+
+    for (const bookId of bookIds) {
+      tasks.push(
+        limiter(async () => {
+          try {
+            throwIfAborted(cancelSignal);
+            await furiganaService.addFuriganaToBook(bookId);
+
+            replicationProgress$.next({ progressToAdd: 1 });
+          } catch (error) {
+            handleErrorDuringReplication(error, `Error on adding furigana to book ${bookId}: `, [
+              limiter
+            ]);
+
+            failed += 1;
+          }
+        })
+      );
+    }
+
+    await Promise.all(tasks).catch(() => {});
+
+    resetProgress();
+
+    if (failed) {
+      const errorMessage = `Unable to add furigana to ${pluralize(failed, 'Title')}`;
+
+      showError('Furigana Addition Failed', errorMessage, errorMessage);
+    }
+  }
+
   function getTimestamp(seconds: number) {
     return seconds && Number.isFinite(seconds)
       ? new Date(seconds * 1000).toISOString().substr(11, 8)
@@ -678,6 +725,7 @@
       goto(`${pagePath}${mergeEntries.STATISTICS.routeId}`);
     }}
     on:deleteStatistics={onDeleteStatistics}
+    on:addFurigana={() => addFuriganaToBooks([...selectedBookIds])}
     on:replicateData={onReplicateData}
     on:importBackup={(ev) => onImportBackup(ev.detail)}
   />

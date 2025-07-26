@@ -43,7 +43,8 @@
     faSortDown,
     faSortUp,
     faTimes,
-    faTrash
+    faTrash,
+    faLanguage
   } from '@fortawesome/free-solid-svg-icons';
   import { createEventDispatcher } from 'svelte';
   import Fa from 'svelte-fa';
@@ -71,6 +72,7 @@
     deleteStatistics: void;
     replicateData: void;
     cancelReplication: void;
+    addFurigana: void;
   }>();
 
   const nTranslateXHeaderMat = '-translate-x-3 xl:-translate-x-2.5';
@@ -515,6 +517,18 @@
             on:keyup={dummyFn}
           >
             <Fa icon={faCloudArrowUp} />
+          </div>
+          <div
+            tabindex="0"
+            role="button"
+            title="Add Furigana to selected Books"
+            class="transform-gpu {baseIconClasses}"
+            in:scale={inAnimationParams}
+            out:scale={outAnimationParams}
+            on:click={() => dispatch('addFurigana')}
+            on:keyup={dummyFn}
+          >
+            <Fa icon={faLanguage} />
           </div>
           {#if $storageSource$ === StorageKey.BROWSER}
             <div
