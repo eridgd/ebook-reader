@@ -158,9 +158,17 @@ const furiganaService = {
     const hasRt = /<rt[^>]*>/i.test(html);
 
     if (hasRuby || hasRt) {
+      // Find the actual ruby/rt tags to see what they contain
+      const rubyMatches = html.match(/<ruby[^>]*>.*?<\/ruby>/gis) || [];
+      const rtMatches = html.match(/<rt[^>]*>.*?<\/rt>/gis) || [];
+
       console.log('Furigana service: Found existing furigana markup:', {
         hasRuby,
         hasRt,
+        rubyCount: rubyMatches.length,
+        rtCount: rtMatches.length,
+        sampleRuby: rubyMatches.slice(0, 3),
+        sampleRt: rtMatches.slice(0, 3),
         sampleText: html.substring(0, 200) + '...'
       });
     }

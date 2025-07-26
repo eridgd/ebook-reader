@@ -664,11 +664,13 @@
             replicationProgress$.next({ progressToAdd: 1 });
             succeeded += 1;
           } catch (error: any) {
+            // Check if this is a skip error first
             if (error.message?.includes('already has furigana') || error.isSkip) {
               // This is not a real error, just a skip
               replicationProgress$.next({ progressToAdd: 1 });
               skipped += 1;
             } else {
+              // Handle actual errors
               handleErrorDuringReplication(error, `Error on adding furigana to book ${bookId}: `, [
                 limiter
               ]);
@@ -708,8 +710,7 @@
             component: MessageDialog,
             props: {
               title,
-              message,
-              type: messageType
+              message
             }
           }
         ]);
