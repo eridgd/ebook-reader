@@ -55,8 +55,8 @@ An online e-book reader that supports dictionary extensions like Yomitan, which 
 
 ## Furigana Features
 
-- **Kanji-Only Processing**: Only adds furigana to kanji characters (一-龯), leaving hiragana and katakana unchanged
-- **Reading Conversion**: Converts dictionary katakana readings to hiragana for consistent furigana display
+- **Kanji-Only Processing**: Only adds furigana to kanji characters (一-龯), leaving hiragana and katakana words unchanged
+- **Dictionary Reading Display**: Converts dictionary katakana readings to hiragana for cleaner furigana display (e.g., カンジ → かんじ)
 - **Performance Optimized**: Uses CDN-based dictionaries for fast loading
 - **Browser Compatible**: Modern Promise-based implementation works in all modern browsers
 - **No Local Storage**: Dictionary files are loaded from CDN, saving local storage space
