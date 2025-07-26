@@ -12,10 +12,22 @@ const config = {
   plugins: [sveltekit()],
   ssr: {
     // https://github.com/FortAwesome/Font-Awesome/issues/18677
-    noExternal: ['@fortawesome/*', '@popperjs/*']
+    noExternal: ['@fortawesome/*', '@popperjs/*', '@sglkc/kuromoji']
   },
   experimental: {
     prebundleSvelteLibraries: true
+  },
+  define: {
+    global: 'globalThis'
+  },
+  optimizeDeps: {
+    include: ['@sglkc/kuromoji'],
+    force: true
+  },
+  server: {
+    fs: {
+      allow: ['..']
+    }
   }
 };
 

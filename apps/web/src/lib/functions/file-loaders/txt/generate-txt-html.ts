@@ -5,8 +5,11 @@
  */
 
 import { getCharacterCount } from '$lib/functions/get-character-count';
+import furiganaService from '$lib/functions/furigana-service';
+import { autoFuriganaEnabled$ } from '$lib/data/store';
+import { getValueSync } from '$lib/functions/rxjs/get-value-sync';
 
-export function getFormattedElementTxt(data: string) {
+export async function getFormattedElementTxt(data: string) {
   const result = document.createElement('div');
   const punctuationRegex = /[。.）」？！!?]+/;
   const lines = data.split(/\r?\n/);
@@ -74,7 +77,7 @@ export function getFormattedElementTxt(data: string) {
 
           if (wasPunctuation || index2 > length2 - 1) {
             ({ currentParagraphContent, currentSectionLength, currentChildDiv, currentSectionId } =
-              updateContent(
+              await updateContent(
                 currentParagraphContent,
                 currentSectionLength,
                 currentChildDiv,
@@ -90,7 +93,7 @@ export function getFormattedElementTxt(data: string) {
 
   if (!addedSections.has(currentSectionId)) {
     if (currentParagraphContent.length) {
-      ({ currentChildDiv } = updateContent(
+      ({ currentChildDiv } = await updateContent(
         currentParagraphContent,
         currentSectionLength,
         currentChildDiv,
@@ -109,7 +112,7 @@ export function getFormattedElementTxt(data: string) {
   return { element: result, characters: getCharacterCount(result) };
 }
 
-function updateContent(
+async function updateContent(
   paragraphContent: string,
   sectionLength: number,
   childDiv: HTMLDivElement,
@@ -125,7 +128,18 @@ function updateContent(
 
   const paragraph = document.createElement('p');
 
-  paragraph.innerText = currentParagraphContent;
+  // Process with furigana service if enabled
+  if (getValueSync(autoFuriganaEnabled$)) {
+    try {
+      paragraph.innerHTML = await furiganaService.addFuriganaToText(currentParagraphContent);
+    } catch (e) {
+      console.error('Failed to add furigana to TXT paragraph:', e);
+      paragraph.innerText = currentParagraphContent; // Fallback
+    }
+  } else {
+    paragraph.innerText = currentParagraphContent;
+  }
+
   currentSectionLength += currentParagraphContent.length;
   currentParagraphContent = '';
 

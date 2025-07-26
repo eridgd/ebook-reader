@@ -10,7 +10,7 @@ import { getFormattedElementTxt } from '$lib/functions/file-loaders/txt/generate
 
 export default async function loadTxt(file: File, lastBookModified: number): Promise<LoadData> {
   const data = await extractTxt(file);
-  const { element, characters } = getFormattedElementTxt(data);
+  const { element, characters } = await getFormattedElementTxt(data);
 
   return {
     title: file.name.replace(/\.txt$/, ''),

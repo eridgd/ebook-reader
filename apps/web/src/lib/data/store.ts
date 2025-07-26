@@ -87,6 +87,10 @@ export const furiganaStyle$ = writableStringLocalStorageSubject<FuriganaStyle>()
   'furiganaStyle',
   FuriganaStyle.Partial
 );
+export const autoFuriganaEnabled$ = writableBooleanLocalStorageSubject()(
+  'autoFuriganaEnabled',
+  false
+);
 export const writingMode$ = writableStringLocalStorageSubject<WritingMode>()(
   'writingMode',
   'vertical-rl'

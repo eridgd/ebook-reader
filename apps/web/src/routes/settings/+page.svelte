@@ -10,11 +10,13 @@
     adjustStatisticsAfterIdleTime$,
     autoBookmark$,
     autoBookmarkTime$,
+    autoFuriganaEnabled$,
+    confirmClose$,
     autoPositionOnResize$,
     autoReplication$,
     avoidPageBreak$,
+    hideSpoilerImageMode$,
     cacheStorageData$,
-    confirmClose$,
     customReadingPointEnabled$,
     disableWheelNavigation$,
     enableReaderWakeLock$,
@@ -59,8 +61,7 @@
     trackerSkipThresholdAction$,
     viewMode$,
     writingMode$,
-    readingGoalsMergeMode$,
-    hideSpoilerImageMode$
+    readingGoalsMergeMode$
   } from '$lib/data/store';
   import { mergeEntries } from '$lib/components/merged-header-icon/merged-entries';
   import { pagePath } from '$lib/data/env';
@@ -151,6 +152,7 @@
       bind:blurImageMode={$hideSpoilerImageMode$}
       bind:hideFurigana={$hideFurigana$}
       bind:furiganaStyle={$furiganaStyle$}
+      bind:autoFuriganaEnabled={$autoFuriganaEnabled$}
       bind:writingMode={$writingMode$}
       bind:prioritizeReaderStyles={$prioritizeReaderStyles$}
       bind:enableTextJustification={$enableTextJustification$}

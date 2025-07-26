@@ -10,7 +10,23 @@ import { isOPFType, type EpubContent, type EpubOPFContent } from './types';
 import type { Entry } from '@zip.js/zip.js';
 import { XMLParser } from 'fast-xml-parser';
 import initZipSettings from '../utils/init-zip-settings';
-import path from 'path-browserify';
+
+// Simple browser-compatible path utility
+const path = {
+  join: (...parts: string[]) => {
+    return parts
+      .map((part, index) => {
+        if (index === 0) return part.replace(/\/+$/, '');
+        return part.replace(/^\/+|\/+$/g, '');
+      })
+      .filter((part) => part.length > 0)
+      .join('/');
+  },
+  dirname: (filePath: string) => {
+    const lastSlash = filePath.lastIndexOf('/');
+    return lastSlash === -1 ? '.' : filePath.substring(0, lastSlash);
+  }
+};
 
 initZipSettings();
 

@@ -78,6 +78,8 @@
 
   export let furiganaStyle: FuriganaStyle;
 
+  export let autoFuriganaEnabled: boolean;
+
   export let writingMode: WritingMode;
 
   export let prioritizeReaderStyles: boolean;
@@ -756,6 +758,12 @@
         />
       </SettingsItemGroup>
     {/if}
+    <SettingsItemGroup
+      title="Automatically Add Furigana"
+      tooltip="Adds furigana to Japanese text during book import. May increase initial loading time."
+    >
+      <ButtonToggleGroup options={optionsForToggle} bind:selectedOptionId={autoFuriganaEnabled} />
+    </SettingsItemGroup>
     {#if statisticsEnabled}
       <SettingsItemGroup
         title="Custom Point pauses Tracker"

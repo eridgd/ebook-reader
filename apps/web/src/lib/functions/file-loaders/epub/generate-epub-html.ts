@@ -11,11 +11,34 @@ import clearAllBadImageRef from '../utils/clear-all-bad-image-ref';
 import fixXHtmlHref from '../utils/fix-xhtml-href';
 import { getCharacterCount } from '$lib/functions/get-character-count';
 import { getParagraphNodes } from '../../../components/book-reader/get-paragraph-nodes';
-import path from 'path-browserify';
+import furiganaService from '$lib/functions/furigana-service';
+import { autoFuriganaEnabled$ } from '$lib/data/store';
+import { getValueSync } from '$lib/functions/rxjs/get-value-sync';
+
+// Simple browser-compatible path utility
+const path = {
+  join: (...parts: string[]) => {
+    return parts
+      .map((part, index) => {
+        if (index === 0) return part.replace(/\/+$/, '');
+        return part.replace(/^\/+|\/+$/g, '');
+      })
+      .filter((part) => part.length > 0)
+      .join('/');
+  },
+  dirname: (filePath: string) => {
+    const lastSlash = filePath.lastIndexOf('/');
+    return lastSlash === -1 ? '.' : filePath.substring(0, lastSlash);
+  },
+  basename: (filePath: string) => {
+    const lastSlash = filePath.lastIndexOf('/');
+    return lastSlash === -1 ? filePath : filePath.substring(lastSlash + 1);
+  }
+};
 
 export const prependValue = 'ttu-';
 
-export default function generateEpubHtml(
+export default async function generateEpubHtml(
   data: Record<string, string | Blob>,
   contents: EpubContent | EpubOPFContent,
   document: Document,
@@ -131,7 +154,7 @@ export default function generateEpubHtml(
   let previousCharacterCount = 0;
   let currentCharCount = 0;
 
-  itemRefs.forEach((item) => {
+  for (const item of itemRefs) {
     let itemIdRef = item['@_idref'];
     let htmlHref = itemIdToHtmlRef[itemIdRef];
 
@@ -172,6 +195,15 @@ export default function generateEpubHtml(
     }
 
     let innerHtml = body.innerHTML || '';
+
+    // Process with furigana service if enabled
+    if (getValueSync(autoFuriganaEnabled$)) {
+      try {
+        innerHtml = await furiganaService.addFuriganaToHtml(innerHtml);
+      } catch (e) {
+        console.error('Failed to add furigana to EPUB section:', e);
+      }
+    }
 
     blobLocations.forEach((blobLocation) => {
       innerHtml = innerHtml.replaceAll(
@@ -240,7 +272,7 @@ export default function generateEpubHtml(
     }
 
     previousCharacterCount = currentCharCount;
-  });
+  }
 
   clearAllBadImageRef(result);
   fixXHtmlHref(result);
