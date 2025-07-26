@@ -649,6 +649,8 @@
     const tasks: Promise<void>[] = [];
 
     let failed = 0;
+    let skipped = 0;
+    let succeeded = 0;
 
     replicationProgress$.next({ progressBase: 1, maxProgress: bookIds.length });
 
@@ -660,12 +662,18 @@
             await furiganaService.addFuriganaToBook(bookId);
 
             replicationProgress$.next({ progressToAdd: 1 });
-          } catch (error) {
-            handleErrorDuringReplication(error, `Error on adding furigana to book ${bookId}: `, [
-              limiter
-            ]);
-
-            failed += 1;
+            succeeded += 1;
+          } catch (error: any) {
+            if (error.message?.includes('already has furigana') || error.isSkip) {
+              // This is not a real error, just a skip
+              replicationProgress$.next({ progressToAdd: 1 });
+              skipped += 1;
+            } else {
+              handleErrorDuringReplication(error, `Error on adding furigana to book ${bookId}: `, [
+                limiter
+              ]);
+              failed += 1;
+            }
           }
         })
       );
@@ -675,10 +683,37 @@
 
     resetProgress();
 
-    if (failed) {
-      const errorMessage = `Unable to add furigana to ${pluralize(failed, 'Title')}`;
+    // Show results to user
+    let message = '';
+    if (succeeded > 0) {
+      message += `✅ Successfully added furigana to ${pluralize(succeeded, 'book')}. `;
+    }
+    if (skipped > 0) {
+      message += `⏭️ Skipped ${pluralize(skipped, 'book')} (already had furigana). `;
+    }
+    if (failed > 0) {
+      message += `❌ Failed to add furigana to ${pluralize(failed, 'book')}.`;
+    }
 
-      showError('Furigana Addition Failed', errorMessage, errorMessage);
+    if (message) {
+      const title = failed > 0 ? 'Furigana Addition Results' : 'Furigana Addition Complete';
+      const messageType = failed > 0 ? 'error' : 'success';
+
+      if (failed > 0) {
+        showError(title, message, message);
+      } else {
+        // Show success message
+        dialogManager.dialogs$.next([
+          {
+            component: MessageDialog,
+            props: {
+              title,
+              message,
+              type: messageType
+            }
+          }
+        ]);
+      }
     }
   }
 

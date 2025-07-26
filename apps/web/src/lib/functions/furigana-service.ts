@@ -154,7 +154,18 @@ const furiganaService = {
 
   // Checks if HTML content already contains furigana markup
   hasExistingFurigana(html: string): boolean {
-    return /<ruby[^>]*>/i.test(html) || /<rt[^>]*>/i.test(html);
+    const hasRuby = /<ruby[^>]*>/i.test(html);
+    const hasRt = /<rt[^>]*>/i.test(html);
+
+    if (hasRuby || hasRt) {
+      console.log('Furigana service: Found existing furigana markup:', {
+        hasRuby,
+        hasRt,
+        sampleText: html.substring(0, 200) + '...'
+      });
+    }
+
+    return hasRuby || hasRt;
   },
 
   // Adds furigana to an existing book by ID
@@ -171,8 +182,11 @@ const furiganaService = {
 
       // Check if furigana already exists
       if (this.hasExistingFurigana(bookData.elementHtml)) {
-        console.log(`Furigana service: Book "${bookData.title}" already has furigana, skipping`);
-        return;
+        const message = `Book "${bookData.title}" already has furigana, skipping`;
+        console.log(`Furigana service: ${message}`);
+        const error = new Error(message);
+        (error as any).isSkip = true; // Mark as skip for UI handling
+        throw error;
       }
 
       console.log(
