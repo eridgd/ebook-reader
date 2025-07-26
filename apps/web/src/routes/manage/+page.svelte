@@ -42,7 +42,7 @@
   import { keyBy } from '$lib/functions/key-by';
   import { handleErrorDuringReplication } from '$lib/functions/replication/error-handler';
   import { importBackup, importData, replicateData } from '$lib/functions/replication/replicator';
-  import { throwIfAborted } from '$lib/functions/replication/replicator';
+  import { throwIfAborted } from '$lib/functions/replication/replication-error';
   import {
     replicationProgress$,
     executeReplicate$,
