@@ -89,7 +89,7 @@ export const furiganaStyle$ = writableStringLocalStorageSubject<FuriganaStyle>()
 );
 export const autoFuriganaEnabled$ = writableBooleanLocalStorageSubject()(
   'autoFuriganaEnabled',
-  false
+  true
 );
 export const writingMode$ = writableStringLocalStorageSubject<WritingMode>()(
   'writingMode',
