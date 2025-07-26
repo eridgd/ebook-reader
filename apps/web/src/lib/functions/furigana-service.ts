@@ -129,9 +129,9 @@ const furiganaService = {
       let result = '';
 
       for (const token of tokens) {
-        // Check if token has kanji and reading information
+        // Only add furigana for tokens containing kanji characters
         if (token.reading && token.reading !== '*' && /[一-龯]/.test(token.surface_form)) {
-          // Convert katakana reading to hiragana
+          // Convert katakana reading to hiragana for consistent display
           const hiragana = token.reading.replace(/[\u30A1-\u30F6]/g, (match: string) => {
             const chr = match.charCodeAt(0) - 0x60;
             return String.fromCharCode(chr);
@@ -140,7 +140,7 @@ const furiganaService = {
           // Add ruby markup for furigana
           result += `<ruby>${token.surface_form}<rt>${hiragana}</rt></ruby>`;
         } else {
-          // No furigana needed, use original text
+          // No furigana needed for hiragana, katakana, or non-Japanese text
           result += token.surface_form;
         }
       }
