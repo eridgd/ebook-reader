@@ -90,6 +90,7 @@
   } from '$lib/data/store';
   import BookCompletionConfetti from '$lib/components/book-reader/book-completion-confetti/book-completion-confetti.svelte';
   import BookReaderHeader from '$lib/components/book-reader/book-reader-header.svelte';
+  import BookSearch from '$lib/components/book-reader/book-search/book-search.svelte';
   import {
     readerImageGalleryPictures$,
     toggleImageGalleryPictureSpoiler$,
@@ -172,6 +173,7 @@
   let showHeader = false;
   let isBookmarkScreen = false;
   let showFooter = true;
+  let showSearch = false;
   let exploredCharCount = 0;
   let bookCharCount = 0;
   let autoScroller: AutoScroller | undefined;
@@ -1015,6 +1017,14 @@
   }
 
   function onKeydown(ev: KeyboardEvent) {
+    // Open search with Cmd/Ctrl+F
+    if ((ev.ctrlKey || ev.metaKey) && !ev.shiftKey && ev.key.toLowerCase() === 'f') {
+      ev.preventDefault();
+      showHeader = false;
+      showSearch = true;
+      return;
+    }
+
     if (
       $skipKeyDownListener$ ||
       ev.altKey ||
@@ -1526,6 +1536,10 @@
         tocIsOpen$.next(true);
       }}
       on:jumpClick={handleJump}
+      on:searchClick={() => {
+        showHeader = false;
+        showSearch = true;
+      }}
       on:completeBook={completeBook}
       on:setCustomReadingPoint={handleSetCustomReadingPoint}
       on:showCustomReadingPoint={() => {
@@ -1578,6 +1592,16 @@
 {/if}
 
 {#if $bookData$ && $rawBookData$}
+  {#if showSearch}
+    <BookSearch
+      fontColor={$themeOption$?.fontColor}
+      backgroundColor={$backgroundColor$}
+      fullHtml={$bookData$.htmlContent}
+      on:close={() => {
+        showSearch = false;
+      }}
+    />
+  {/if}
   {#if $statisticsEnabled$}
     <BookReadingTracker
       fontColor={$themeOption$.fontColor}

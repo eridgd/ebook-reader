@@ -3,6 +3,7 @@
   import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
   import {
     faBookmark as fasBookmark,
+    faMagnifyingGlass,
     faCrosshairs,
     faExpand,
     faFlag,
@@ -39,6 +40,7 @@
     bookmarkClick: void;
     scrollToBookmarkClick: void;
     jumpClick: void;
+    searchClick: void;
     completeBook: void;
     fullscreenClick: void;
     showCustomReadingPoint: void;
@@ -113,6 +115,16 @@
         <Fa icon={faList} />
       </div>
     {/if}
+    <div
+      tabindex="0"
+      role="button"
+      title="Search in Book"
+      class={baseIconClasses}
+      on:click={() => dispatch('searchClick')}
+      on:keyup={dummyFn}
+    >
+      <Fa icon={faMagnifyingGlass} />
+    </div>
     <div
       tabindex="0"
       role="button"
