@@ -271,6 +271,29 @@
       const targetSection = getTargetSection(detail.selector);
 
       if (targetSection === -1) {
+        // Fallback for dynamic targets (e.g., search highlights)
+        const targetEl = getExternalTargetElement(document, detail.selector);
+        const liveSection = targetEl?.closest('[id^="ttu-"]') as HTMLElement | null;
+
+        if (liveSection) {
+          const index = sections.findIndex((s) => (s as HTMLElement).id === liveSection.id);
+          if (index > -1 && index !== sectionIndex$.getValue()) {
+            const waitForSection = new Promise<void>((resolve) => {
+              sectionReady$.pipe(take(1)).subscribe(() => resolve());
+            });
+            sectionIndex$.next(index);
+            concretePageManager.scrollTo(0, false);
+            await waitForSection;
+            document.dispatchEvent(new CustomEvent(SECTION_CHANGE));
+          }
+        }
+
+        // Try computing scroll within the live section
+        calculator.updateParagraphPos();
+        const fallbackScrollPos = getTargetScrollPos(calculator, detail.selector);
+        if (fallbackScrollPos >= 0) {
+          concretePageManager.scrollTo(fallbackScrollPos, true);
+        }
         return;
       }
 
@@ -287,6 +310,7 @@
         await waitForSection;
       }
 
+      calculator.updateParagraphPos();
       const scrollPos = getTargetScrollPos(calculator, detail.selector);
 
       if (scrollPos < 0) {
@@ -310,6 +334,7 @@
         return;
       }
 
+      calculator.updateParagraphPos();
       const scrollPos = getTargetScrollPos(calculator, detail.selector);
 
       if (scrollPos < 0) {
@@ -346,17 +371,37 @@
     selector: string
   ) {
     const targetElement = getExternalTargetElement(document, selector);
-    const nodeRange = document.createRange();
-
     if (!targetElement) {
       return -1;
     }
 
-    nodeRange.setStart(targetElement, 0);
-    nodeRange.setEnd(targetElement, targetElement.childNodes.length);
+    // Ensure paragraph positions are up to date (DOM may have changed due to highlights)
+    calculatorInstance.updateParagraphPos();
 
+    const makeRangeFromElement = (el: Element) => {
+      const r = document.createRange();
+      // Prefer a text node inside the element to avoid selecting the very end
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const firstText = walker.nextNode() as Text | null;
+      if (firstText && firstText.length > 0) {
+        r.setStart(firstText, 0);
+        r.setEnd(firstText, Math.min(1, firstText.length));
+        return r;
+      }
+      r.selectNode(el);
+      return r;
+    };
+
+    const nodeRange = makeRangeFromElement(targetElement);
+    const charCount = calculatorInstance.calcExploredCharCount(nodeRange);
+    const pos = calculatorInstance.getScrollPosByCharCount(charCount);
+    if (pos >= 0) return pos;
+
+    // Fallback: try the element itself if first attempt failed
+    const fallback = document.createRange();
+    fallback.selectNode(targetElement);
     return calculatorInstance.getScrollPosByCharCount(
-      calculatorInstance.calcExploredCharCount(nodeRange)
+      calculatorInstance.calcExploredCharCount(fallback)
     );
   }
   /** Experimental Code - May be removed or changed any time without warning */
