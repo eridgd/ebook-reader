@@ -281,24 +281,40 @@
 >
   <input
     bind:this={inputEl}
-    class="min-w-0 flex-1 rounded bg-gray-800 px-2 py-1 outline-none"
+    class="min-w-0 flex-1 rounded px-2 py-1 outline-none border"
     placeholder="Search in book"
     bind:value={query}
     on:input={highlightAll}
     on:keydown|stopPropagation={onKeydown}
+    style="background-color: transparent; border-color: currentColor;"
   />
   <label class="flex items-center gap-1 text-sm">
     <input type="checkbox" bind:checked={caseSensitive} on:change={highlightAll} />
     Match case
   </label>
   <!-- removed Find button: search runs as you type -->
-  <button class="rounded bg-gray-600 px-2 py-1" on:click={prev} title="Previous"> Prev </button>
-  <button class="rounded bg-gray-600 px-2 py-1" on:click={next} title="Next"> Next </button>
+  <button
+    class="rounded px-2 py-1 border"
+    style="background-color: transparent; border-color: currentColor;"
+    on:click={prev}
+    title="Previous"
+  >
+    Prev
+  </button>
+  <button
+    class="rounded px-2 py-1 border"
+    style="background-color: transparent; border-color: currentColor;"
+    on:click={next}
+    title="Next"
+  >
+    Next
+  </button>
   <div class="text-sm opacity-75">
     {results.length ? `${currentIndex + 1} / ${results.length}` : ''}
   </div>
   <button
-    class="rounded bg-gray-600 px-2 py-1"
+    class="rounded px-2 py-1 border"
+    style="background-color: transparent; border-color: currentColor;"
     on:click={() => {
       query = '';
       clearHighlights();
@@ -307,7 +323,14 @@
   >
     Clear
   </button>
-  <button class="rounded bg-gray-600 px-2 py-1" on:click={close} title="Close"> Close </button>
+  <button
+    class="rounded px-2 py-1 border"
+    style="background-color: transparent; border-color: currentColor;"
+    on:click={close}
+    title="Close"
+  >
+    Close
+  </button>
 </div>
 
 <style>
@@ -321,10 +344,5 @@
     outline: 2px solid rgba(59, 130, 246, 0.9);
     background: rgba(250, 204, 21, 0.9);
   }
-  .bg-gray-800 {
-    background-color: #1f2937;
-  }
-  .bg-gray-600 {
-    background-color: #4b5563;
-  }
+  /* buttons and input use transparent backgrounds with currentColor borders */
 </style>
