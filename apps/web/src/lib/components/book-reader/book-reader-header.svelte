@@ -26,6 +26,8 @@
   import { dummyFn, isMobile$, isOnOldUrl } from '$lib/functions/utils';
   import { createEventDispatcher } from 'svelte';
   import Fa from 'svelte-fa';
+  import type { BooksDbBookmarkData } from '$lib/data/database/books-db/versions/books-db';
+  import type { ManualBookmark } from '$lib/data/store';
 
   export let hasChapterData: boolean;
   export let hasText: boolean;
@@ -34,10 +36,15 @@
   export let showFullscreenButton: boolean;
   export let isBookmarkScreen: boolean;
   export let hasBookmarkData: boolean;
+  export let manualBookmarks: ManualBookmark[] = [];
+  export let autoBookmark: BooksDbBookmarkData | undefined;
+  export let bookCharCount: number = 0;
+  export let lastBookmarkSavedAt: number = 0;
 
   const dispatch = createEventDispatcher<{
     tocClick: void;
     bookmarkClick: void;
+    addManualBookmark: void;
     scrollToBookmarkClick: void;
     jumpClick: void;
     searchClick: void;
@@ -51,6 +58,8 @@
     settingsClick: void;
     domainHintClick: void;
     bookManagerClick: void;
+    jumpToManualBookmark: string;
+    deleteManualBookmark: string;
   }>();
 
   const customReadingPointMenuItems: {
@@ -63,6 +72,7 @@
   ];
 
   let customReadingPointMenuElm: Popover;
+  let bookmarkMenuElm: Popover;
 
   let menuItems: {
     routeId: string;
@@ -99,6 +109,23 @@
     dispatch(action);
     customReadingPointMenuElm.toggleOpen();
   }
+
+  function formatBookmarkLabel(exploredCharCount?: number, progress?: number | string) {
+    if (bookCharCount && exploredCharCount) {
+      const pct = ((exploredCharCount / bookCharCount) * 100).toFixed(2);
+      return `${exploredCharCount}/${bookCharCount} (${pct}%)`;
+    }
+    if (typeof progress === 'number') {
+      return `${(progress * 100).toFixed(2)}%`;
+    }
+    return exploredCharCount ? `${exploredCharCount}` : '';
+  }
+
+  let showSavedPulse = false;
+  $: if (lastBookmarkSavedAt) {
+    showSavedPulse = true;
+    setTimeout(() => (showSavedPulse = false), 1200);
+  }
 </script>
 
 <div class="flex justify-between bg-gray-700 px-4 md:px-8 {baseHeaderClasses}">
@@ -125,15 +152,77 @@
     >
       <Fa icon={faMagnifyingGlass} />
     </div>
-    <div
-      tabindex="0"
-      role="button"
-      title="Create Bookmark"
-      class={baseIconClasses}
-      on:click={() => dispatch('bookmarkClick')}
-      on:keyup={dummyFn}
-    >
-      <Fa icon={isBookmarkScreen ? fasBookmark : farBookmark} />
+    <div class="flex">
+      <Popover placement="bottom-start" yOffset={0} bind:this={bookmarkMenuElm}>
+        <div slot="icon" title="Bookmarks" class={baseIconClasses}>
+          <Fa icon={isBookmarkScreen ? fasBookmark : farBookmark} />
+        </div>
+        <div class="w-64 bg-gray-700 max-h-80 overflow-auto" slot="content">
+          <div class="flex items-center justify-between px-3 py-2 border-b border-gray-500">
+            <div class="text-sm flex items-center gap-2">
+              <span>Bookmarks</span>
+              {#if showSavedPulse}
+                <span class="text-green-300 text-xs animate-pulse">Saved</span>
+              {/if}
+            </div>
+            <button
+              class="px-2 py-1 text-xs border border-white"
+              on:click={() => {
+                dispatch('addManualBookmark');
+              }}
+            >
+              Add
+            </button>
+          </div>
+          {#if autoBookmark}
+            <div class="px-3 py-2 text-xs flex items-center justify-between bg-gray-600">
+              <span
+                >Auto • {formatBookmarkLabel(
+                  autoBookmark.exploredCharCount,
+                  autoBookmark.progress
+                )}</span
+              >
+              <button
+                class="px-1 border border-white"
+                on:click={() => {
+                  dispatch('scrollToBookmarkClick');
+                  bookmarkMenuElm.toggleOpen();
+                }}>Go</button
+              >
+            </div>
+          {/if}
+          {#if manualBookmarks.length}
+            {#each manualBookmarks as bm (bm.id)}
+              <div
+                class="px-3 py-2 text-xs flex items-center justify-between hover:bg-white hover:text-gray-700"
+              >
+                <button
+                  class="text-left truncate"
+                  title={formatBookmarkLabel(
+                    bm.exploredCharCount,
+                    typeof bm.progress === 'number' ? bm.progress : undefined
+                  )}
+                  on:click={() => {
+                    dispatch('jumpToManualBookmark', bm.id);
+                    bookmarkMenuElm.toggleOpen();
+                  }}
+                  >{formatBookmarkLabel(
+                    bm.exploredCharCount,
+                    typeof bm.progress === 'number' ? bm.progress : undefined
+                  )}</button
+                >
+                <button
+                  class="ml-2 px-1 border border-white"
+                  title="Delete"
+                  on:click={() => dispatch('deleteManualBookmark', bm.id)}>×</button
+                >
+              </div>
+            {/each}
+          {:else}
+            <div class="px-3 py-4 text-xs text-gray-300">No manual bookmarks yet.</div>
+          {/if}
+        </div>
+      </Popover>
     </div>
     {#if hasBookmarkData}
       <div

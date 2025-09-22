@@ -176,6 +176,20 @@ export const autoBookmarkTime$ = writableNumberLocalStorageSubject()('autoBookma
 
 export const pageColumns$ = writableNumberLocalStorageSubject()('pageColumns', 0);
 
+export type ManualBookmark = {
+  id: string;
+  dataId: number;
+  exploredCharCount?: number;
+  progress: number | string | undefined;
+  lastBookmarkModified: number;
+  scrollX?: number;
+  scrollY?: number;
+};
+
+export const manualBookmarks$ = writableObjectLocalStorageSubject<
+  Record<number, ManualBookmark[]>
+>()('manualBookmarks', {});
+
 export const requestPersistentStorage$ = writableBooleanLocalStorageSubject()(
   'requestPersistentStorage',
   true

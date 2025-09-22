@@ -79,6 +79,8 @@
     statisticsMergeMode$,
     isOnline$,
     manualBookmark$,
+    manualBookmarks$,
+    type ManualBookmark,
     customThemes$,
     overwriteBookCompletion$,
     startDayHoursForTracker$,
@@ -90,6 +92,7 @@
   } from '$lib/data/store';
   import BookCompletionConfetti from '$lib/components/book-reader/book-completion-confetti/book-completion-confetti.svelte';
   import BookReaderHeader from '$lib/components/book-reader/book-reader-header.svelte';
+  import { popovers } from '$lib/components/popover/popover';
   import BookSearch from '$lib/components/book-reader/book-search/book-search.svelte';
   import {
     readerImageGalleryPictures$,
@@ -103,6 +106,8 @@
     isTrackerPaused$
   } from '$lib/components/book-reader/book-reading-tracker/book-reading-tracker';
   import BookReadingTracker from '$lib/components/book-reader/book-reading-tracker/book-reading-tracker.svelte';
+  import Toast from '$lib/components/toast/toast.svelte';
+  import { showToast } from '$lib/components/toast/toast-store';
   import {
     getChapterData,
     nextChapter$,
@@ -180,6 +185,9 @@
   let bookmarkManager: BookmarkManager | undefined;
   let pageManager: PageManager | undefined;
   let bookmarkData: Promise<BooksDbBookmarkData | undefined> = Promise.resolve(undefined);
+  let autoBookmarkData: BooksDbBookmarkData | undefined;
+  let manualBookmarksForBook: ManualBookmark[] = [];
+  let lastBookmarkSavedAt = 0;
   let customReadingPointTop = -2;
   let customReadingPointLeft = -2;
   let customReadingPoint = $verticalMode$
@@ -331,6 +339,7 @@
     tap((rawBookData) => {
       if (!rawBookData) return;
       bookmarkData = database.getBookmark(rawBookData.id);
+      manualBookmarksForBook = $manualBookmarks$[rawBookData.id] || [];
     }),
     reduceToEmptyString()
   );
@@ -523,6 +532,7 @@
   $: bookmarkData.then((data) => {
     hasBookmarkData = !!data;
     storedExploredCharacter = data?.exploredCharCount || 0;
+    autoBookmarkData = data;
   });
 
   /** Experimental Code - May be removed any time without warning */
@@ -1095,7 +1105,31 @@
     bookmarkData = Promise.resolve(data);
 
     scheduleReplication(StorageDataType.PROGRESS);
+
+    // Also append to manual bookmarks list when triggered via header/menu
+    if (addManualAfterDbPut) {
+      const newManual: ManualBookmark = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        dataId: data.dataId,
+        exploredCharCount: data.exploredCharCount,
+        progress: data.progress,
+        lastBookmarkModified: data.lastBookmarkModified,
+        scrollX: (data as any).scrollX,
+        scrollY: (data as any).scrollY
+      };
+      const all = { ...$manualBookmarks$ };
+      const list = all[bookId] ? [...all[bookId]] : [];
+      list.unshift(newManual);
+      all[bookId] = list.slice(0, 100);
+      manualBookmarks$.next(all);
+      manualBookmarksForBook = all[bookId];
+      addManualAfterDbPut = false;
+      lastBookmarkSavedAt = Date.now();
+      showToast('ブックマークを保存しました');
+    }
   }
+
+  let addManualAfterDbPut = false;
 
   async function scrollToBookmark() {
     const data = await bookmarkData;
@@ -1106,6 +1140,34 @@
     }
 
     bookmarkManager.scrollToBookmark(data, customReadingPointScrollOffset);
+  }
+
+  function jumpToManualBookmark(id: string) {
+    if (!bookmarkManager) return;
+    const target = manualBookmarksForBook.find((b) => b.id === id);
+    if (!target) return;
+    const data: BooksDbBookmarkData = {
+      dataId: target.dataId,
+      exploredCharCount: target.exploredCharCount,
+      progress: target.progress,
+      lastBookmarkModified: target.lastBookmarkModified,
+      ...(target.scrollX !== undefined ? { scrollX: target.scrollX } : {}),
+      ...(target.scrollY !== undefined ? { scrollY: target.scrollY } : {})
+    } as any;
+    if (data.exploredCharCount !== exploredCharCount) {
+      pauseTracker(true);
+    }
+    bookmarkManager.scrollToBookmark(data, customReadingPointScrollOffset);
+  }
+
+  function deleteManualBookmark(id: string) {
+    const bookId = getBookIdSync();
+    if (!bookId) return;
+    const all = { ...$manualBookmarks$ };
+    const list = (all[bookId] || []).filter((b) => b.id !== id);
+    all[bookId] = list;
+    manualBookmarks$.next(all);
+    manualBookmarksForBook = list;
   }
 
   function onFullscreenClick() {
@@ -1502,6 +1564,13 @@
       }
     }
   }
+
+  function handleHeaderClickOutside(ev: MouseEvent) {
+    const target = ev.target as Element;
+    if ($popovers?.length) return;
+    if (target && target.closest('[data-popover]')) return;
+    showHeader = false;
+  }
 </script>
 
 <svelte:head>
@@ -1515,7 +1584,7 @@
   <div
     class="elevation-4 writing-horizontal-tb fixed inset-x-0 top-0 z-10 w-full"
     transition:fly|local={{ y: -300, easing: quintInOut }}
-    use:clickOutside={() => (showHeader = false)}
+    use:clickOutside={handleHeaderClickOutside}
   >
     <BookReaderHeader
       hasChapterData={!!$sectionData$?.length}
@@ -1528,6 +1597,10 @@
       showFullscreenButton={fullscreenManager.fullscreenEnabled}
       autoScrollMultiplier={$multiplier$}
       {hasBookmarkData}
+      {bookCharCount}
+      manualBookmarks={manualBookmarksForBook}
+      autoBookmark={autoBookmarkData}
+      {lastBookmarkSavedAt}
       bind:isBookmarkScreen
       on:tocClick={() => {
         pauseTracker();
@@ -1569,6 +1642,12 @@
       }}
       on:fullscreenClick={onFullscreenClick}
       on:bookmarkClick={bookmarkPage}
+      on:addManualBookmark={() => {
+        addManualAfterDbPut = true;
+        bookmarkPage();
+      }}
+      on:jumpToManualBookmark={({ detail }) => jumpToManualBookmark(detail)}
+      on:deleteManualBookmark={({ detail }) => deleteManualBookmark(detail)}
       on:scrollToBookmarkClick={() => {
         showHeader = false;
         scrollToBookmark();
@@ -1592,6 +1671,7 @@
 {/if}
 
 {#if $bookData$ && $rawBookData$}
+  <Toast fontColor={$themeOption$?.tooltipTextFontColor} />
   {#if showSearch}
     <BookSearch
       fontColor={$themeOption$?.fontColor}
