@@ -17,6 +17,7 @@
   let idPrefix = `ttu-search-${Date.now()}-`;
   let pendingNavDirection: 1 | -1 | 0 = 0;
   let allSections: Element[] = [];
+  let totalMatchCount = 0;
 
   const highlightClass = 'ttu-search-highlight';
   const currentClass = 'ttu-search-current';
@@ -83,6 +84,22 @@
     }
   }
 
+  function countAllMatches(): number {
+    const regex = buildRegex(query.trim());
+    if (!regex || !allSections.length) return 0;
+
+    let count = 0;
+    for (const section of allSections) {
+      const text = section.textContent || '';
+      regex.lastIndex = 0;
+      const matches = text.match(regex);
+      if (matches) {
+        count += matches.length;
+      }
+    }
+    return count;
+  }
+
   function isSkippable(node: Node) {
     const parent = (node as any).parentElement as HTMLElement | null;
     if (!parent) return false;
@@ -96,7 +113,13 @@
     clearHighlights();
     const root = getContentRoot();
     const regex = buildRegex(query.trim());
-    if (!root || !regex) return;
+    if (!root || !regex) {
+      totalMatchCount = 0;
+      return;
+    }
+
+    // Count all matches across all sections for accurate total
+    totalMatchCount = countAllMatches();
 
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode(node: Node) {
@@ -246,6 +269,32 @@
     return container && container instanceof HTMLElement ? container.id || '' : '';
   }
 
+  function getGlobalMatchIndex(): number {
+    if (!allSections.length || results.length === 0 || currentIndex < 0) return 0;
+
+    const currentSectionId = getCurrentSectionId();
+    const regex = buildRegex(query.trim());
+    if (!regex) return 0;
+
+    let globalIndex = 0;
+
+    // Count matches in sections before the current section
+    for (const section of allSections) {
+      if (section.id === currentSectionId) {
+        break;
+      }
+      const text = section.textContent || '';
+      regex.lastIndex = 0;
+      const matches = text.match(regex);
+      if (matches) {
+        globalIndex += matches.length;
+      }
+    }
+
+    // Add the current index within this section
+    return globalIndex + currentIndex + 1;
+  }
+
   function navigateToSectionWithMatch(direction: 1 | -1) {
     if (!fullHtml || !query.trim() || !allSections.length) return false;
     const currentId = getCurrentSectionId();
@@ -310,7 +359,7 @@
     Next
   </button>
   <div class="text-sm opacity-75">
-    {results.length ? `${currentIndex + 1} / ${results.length}` : ''}
+    {totalMatchCount > 0 ? `${getGlobalMatchIndex()} / ${totalMatchCount}` : ''}
   </div>
   <button
     class="rounded px-2 py-1 border"

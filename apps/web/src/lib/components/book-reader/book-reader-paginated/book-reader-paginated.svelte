@@ -285,10 +285,14 @@
             concretePageManager.scrollTo(0, false);
             await waitForSection;
             document.dispatchEvent(new CustomEvent(SECTION_CHANGE));
+            // Don't scroll here - let the SECTION_CHANGE handler in search component handle it
+            return;
           }
         }
 
-        // Try computing scroll within the live section
+        // Try computing scroll within the live section (only if we didn't change sections)
+        // Use requestAnimationFrame to ensure DOM layout is complete after highlights are added
+        await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
         calculator.updateParagraphPos();
         const fallbackScrollPos = getTargetScrollPos(calculator, detail.selector);
         if (fallbackScrollPos >= 0) {
