@@ -63,9 +63,21 @@ export function getRangeForUserSelection(window: Window, preSelection: Range | u
 }
 
 export function getNodeBoundingRect(document: Document, node: Node) {
+  // Check if node is still connected to the DOM
+  // When search highlights are added, text nodes can be replaced and detached
+  if (!node.parentNode) {
+    // Node is detached - return a zero-size rect
+    return new DOMRect(0, 0, 0, 0);
+  }
+
   const range = document.createRange();
-  range.selectNode(node);
-  return range.getBoundingClientRect();
+  try {
+    range.selectNode(node);
+    return range.getBoundingClientRect();
+  } catch {
+    // Fallback for any other range errors
+    return new DOMRect(0, 0, 0, 0);
+  }
 }
 
 export function clearRange(window: Window, timeout = 250) {

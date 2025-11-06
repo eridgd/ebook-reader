@@ -78,6 +78,17 @@ export class CharacterStatsCalculator {
     for (let i = 0; i < this.paragraphs.length; i += 1) {
       const node = this.paragraphs[i];
 
+      // Skip detached nodes (can happen when search highlights are added)
+      if (!node.parentNode) {
+        // Use previous position as fallback
+        const fallbackPos = this.paragraphPos[i - 1] || 0;
+        this.paragraphPos[i] = fallbackPos;
+        const indices = paragraphPosToIndices.get(fallbackPos) || [];
+        paragraphPosToIndices.set(fallbackPos, indices);
+        indices.push(i);
+        continue;
+      }
+
       const nodeRect = getNodeBoundingRect(this.document, node);
 
       const getParagraphPos = () => {

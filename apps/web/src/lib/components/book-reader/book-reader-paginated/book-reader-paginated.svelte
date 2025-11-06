@@ -392,21 +392,33 @@
         r.setEnd(firstText, Math.min(1, firstText.length));
         return r;
       }
-      r.selectNode(el);
+      try {
+        r.selectNode(el);
+      } catch {
+        // Element might not be in DOM or not have a parent
+        return null;
+      }
       return r;
     };
 
     const nodeRange = makeRangeFromElement(targetElement);
-    const charCount = calculatorInstance.calcExploredCharCount(nodeRange);
-    const pos = calculatorInstance.getScrollPosByCharCount(charCount);
-    if (pos >= 0) return pos;
+    if (nodeRange) {
+      const charCount = calculatorInstance.calcExploredCharCount(nodeRange);
+      const pos = calculatorInstance.getScrollPosByCharCount(charCount);
+      if (pos >= 0) return pos;
+    }
 
     // Fallback: try the element itself if first attempt failed
-    const fallback = document.createRange();
-    fallback.selectNode(targetElement);
-    return calculatorInstance.getScrollPosByCharCount(
-      calculatorInstance.calcExploredCharCount(fallback)
-    );
+    try {
+      const fallback = document.createRange();
+      fallback.selectNode(targetElement);
+      return calculatorInstance.getScrollPosByCharCount(
+        calculatorInstance.calcExploredCharCount(fallback)
+      );
+    } catch {
+      // Element not in DOM
+      return -1;
+    }
   }
   /** Experimental Code - May be removed or changed any time without warning */
 
