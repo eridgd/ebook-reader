@@ -22,15 +22,33 @@ function binarySearchNodeInRangeImpl() {
     if (r < l) return -1;
 
     const mid = Math.floor((l + r) / 2);
+    const node = arr[mid];
 
-    if (x.intersectsNode(arr[mid])) {
-      return mid;
+    // Skip detached nodes (can happen when search highlights are added)
+    if (!node.parentNode) {
+      // Try searching in the left half first
+      const leftResult = binarySearchRecursive(arr, l, mid - 1, x);
+      if (leftResult !== -1) return leftResult;
+      // Then try the right half
+      return binarySearchRecursive(arr, mid + 1, r, x);
     }
 
-    if (x.comparePoint(arr[mid], 0) > 0) {
-      return binarySearchRecursive(arr, l, mid - 1, x);
+    try {
+      if (x.intersectsNode(node)) {
+        return mid;
+      }
+
+      if (x.comparePoint(node, 0) > 0) {
+        return binarySearchRecursive(arr, l, mid - 1, x);
+      }
+      return binarySearchRecursive(arr, mid + 1, r, x);
+    } catch {
+      // Node is not in the same tree as the range (detached)
+      // Try searching in both halves
+      const leftResult = binarySearchRecursive(arr, l, mid - 1, x);
+      if (leftResult !== -1) return leftResult;
+      return binarySearchRecursive(arr, mid + 1, r, x);
     }
-    return binarySearchRecursive(arr, mid + 1, r, x);
   };
 
   return (arr: Node[], x: Range) => binarySearchRecursive(arr, 0, arr.length - 1, x);
