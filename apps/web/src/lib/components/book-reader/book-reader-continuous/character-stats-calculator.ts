@@ -16,13 +16,13 @@ import { getNodeBoundingRect } from '$lib/functions/range-util';
 import { getParagraphNodes } from '$lib/components/book-reader/get-paragraph-nodes';
 
 export class CharacterStatsCalculator {
-  readonly charCount: number;
+  charCount: number;
 
-  readonly accumulatedCharCount: number[];
+  accumulatedCharCount: number[];
 
-  readonly paragraphPos: number[];
+  paragraphPos: number[];
 
-  private readonly paragraphs: Node[];
+  private paragraphs: Node[];
 
   private paragraphPosToAccCharCount = new Map<number, number>();
 
@@ -36,6 +36,23 @@ export class CharacterStatsCalculator {
     private readonly document: Document
   ) {
     this.paragraphs = getParagraphNodes(containerEl);
+
+    this.paragraphPos = Array(this.paragraphs.length);
+    this.accumulatedCharCount = [];
+    let exploredCharCount = 0;
+    this.paragraphs.forEach((node) => {
+      exploredCharCount += getCharacterCount(node);
+      this.accumulatedCharCount.push(exploredCharCount);
+    });
+    this.charCount = exploredCharCount;
+  }
+
+  /**
+   * Refreshes the paragraph nodes from the DOM.
+   * Useful when the DOM has been modified (e.g., by search highlights).
+   */
+  refreshParagraphNodes() {
+    this.paragraphs = getParagraphNodes(this.containerEl);
 
     this.paragraphPos = Array(this.paragraphs.length);
     this.accumulatedCharCount = [];

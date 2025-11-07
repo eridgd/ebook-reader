@@ -293,6 +293,8 @@
         // Try computing scroll within the live section (only if we didn't change sections)
         // Use requestAnimationFrame to ensure DOM layout is complete after highlights are added
         await new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
+        // Refresh paragraph nodes in case DOM was modified by search highlights
+        calculator.refreshParagraphNodes();
         calculator.updateParagraphPos();
         const fallbackScrollPos = getTargetScrollPos(calculator, detail.selector);
         if (fallbackScrollPos >= 0) {
@@ -314,6 +316,8 @@
         await waitForSection;
       }
 
+      // Refresh paragraph nodes in case DOM was modified by search highlights
+      calculator.refreshParagraphNodes();
       calculator.updateParagraphPos();
       const scrollPos = getTargetScrollPos(calculator, detail.selector);
 
@@ -338,6 +342,8 @@
         return;
       }
 
+      // Refresh paragraph nodes in case DOM was modified by search highlights
+      calculator.refreshParagraphNodes();
       calculator.updateParagraphPos();
       const scrollPos = getTargetScrollPos(calculator, detail.selector);
 

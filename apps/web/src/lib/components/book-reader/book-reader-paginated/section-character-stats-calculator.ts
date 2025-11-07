@@ -64,6 +64,15 @@ export class SectionCharacterStatsCalculator {
     this.calculator.updateParagraphPos(this.virtualScrollPos$.getValue());
   }
 
+  /**
+   * Refreshes the paragraph nodes in the calculator.
+   * Useful when the DOM has been modified (e.g., by search highlights).
+   */
+  refreshParagraphNodes() {
+    if (!this.calculator) return;
+    this.calculator.refreshParagraphNodes();
+  }
+
   calcExploredCharCount(customReadingPointRange: Range | undefined) {
     if (dev && this.getPageGap() === 0) {
       // Scroll position must be beyond text size for character count increment
