@@ -19,6 +19,7 @@
   let allSections: Element[] = [];
   let totalMatchCount = 0;
   let isNavigating = false; // Lock to prevent race conditions
+  let navigationTimeoutId: number | undefined;
 
   const highlightClass = 'ttu-search-highlight';
   const currentClass = 'ttu-search-current';
@@ -48,8 +49,13 @@
           scrollToCurrent(true);
         }
         pendingNavDirection = 0;
-        isNavigating = false; // Release navigation lock
+        releaseNavigationLock(); // Release navigation lock
       }, 0);
+    };
+
+    const releaseNavigationLock = () => {
+      clearTimeout(navigationTimeoutId);
+      isNavigating = false;
     };
     document.addEventListener(SECTION_CHANGE, onSectionChange, false);
     cleanupFns.push(() => document.removeEventListener(SECTION_CHANGE, onSectionChange, false));
@@ -199,6 +205,10 @@
       if (navigateToSectionWithMatch(1)) {
         pendingNavDirection = 1;
         isNavigating = true;
+        // Safety timeout: release lock after 3 seconds if section change doesn't fire
+        navigationTimeoutId = window.setTimeout(() => {
+          isNavigating = false;
+        }, 3000);
       }
     } else {
       currentIndex = -1;
@@ -248,6 +258,10 @@
     if (navigateToSectionWithMatch(1)) {
       pendingNavDirection = 1;
       isNavigating = true;
+      // Safety timeout: release lock after 3 seconds if section change doesn't fire
+      navigationTimeoutId = window.setTimeout(() => {
+        isNavigating = false;
+      }, 3000);
     }
   }
 
@@ -268,6 +282,10 @@
     if (navigateToSectionWithMatch(-1)) {
       pendingNavDirection = -1;
       isNavigating = true;
+      // Safety timeout: release lock after 3 seconds if section change doesn't fire
+      navigationTimeoutId = window.setTimeout(() => {
+        isNavigating = false;
+      }, 3000);
     }
   }
 
@@ -368,16 +386,20 @@
   <!-- removed Find button: search runs as you type -->
   <button
     class="rounded px-2 py-1 border"
+    class:opacity-50={isNavigating}
     style="background-color: transparent; border-color: currentColor;"
     on:click={prev}
+    disabled={isNavigating}
     title="Previous"
   >
     Prev
   </button>
   <button
     class="rounded px-2 py-1 border"
+    class:opacity-50={isNavigating}
     style="background-color: transparent; border-color: currentColor;"
     on:click={next}
+    disabled={isNavigating}
     title="Next"
   >
     Next
