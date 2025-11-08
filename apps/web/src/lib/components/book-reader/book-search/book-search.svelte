@@ -23,7 +23,8 @@
   const currentClass = 'ttu-search-current';
 
   // Reactive variable for counter - updates whenever currentIndex or results changes
-  $: globalIndex = getGlobalMatchIndex();
+  // Include results.length to ensure reactivity when section changes
+  $: globalIndex = currentIndex >= 0 && results.length > 0 ? getGlobalMatchIndex() : 0;
 
   onMount(() => {
     // Autofocus input when opening
@@ -220,31 +221,34 @@
   }
 
   function next() {
-    if (results.length) {
+    if (results.length && currentIndex >= 0) {
       const wasLast = currentIndex === results.length - 1;
-      currentIndex = (currentIndex + 1) % results.length;
-      updateCurrent();
       if (!wasLast) {
+        // Navigate within current section
+        currentIndex = currentIndex + 1;
+        updateCurrent();
         scrollToCurrent();
         return;
       }
     }
-    // Try next section if any
+    // At last result in section or no results - try next section
     if (navigateToSectionWithMatch(1)) {
       pendingNavDirection = 1;
     }
   }
 
   function prev() {
-    if (results.length) {
+    if (results.length && currentIndex >= 0) {
       const wasFirst = currentIndex === 0;
-      currentIndex = (currentIndex - 1 + results.length) % results.length;
-      updateCurrent();
       if (!wasFirst) {
+        // Navigate within current section
+        currentIndex = currentIndex - 1;
+        updateCurrent();
         scrollToCurrent();
         return;
       }
     }
+    // At first result in section or no results - try previous section
     if (navigateToSectionWithMatch(-1)) {
       pendingNavDirection = -1;
     }
