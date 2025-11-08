@@ -22,6 +22,9 @@
   const highlightClass = 'ttu-search-highlight';
   const currentClass = 'ttu-search-current';
 
+  // Reactive variable for counter - updates whenever currentIndex or results changes
+  $: globalIndex = getGlobalMatchIndex();
+
   onMount(() => {
     // Autofocus input when opening
     setTimeout(() => inputEl?.focus(), 0);
@@ -359,7 +362,7 @@
     Next
   </button>
   <div class="text-sm opacity-75">
-    {totalMatchCount > 0 ? `${getGlobalMatchIndex()} / ${totalMatchCount}` : ''}
+    {totalMatchCount > 0 ? `${globalIndex} / ${totalMatchCount}` : ''}
   </div>
   <button
     class="rounded px-2 py-1 border"
