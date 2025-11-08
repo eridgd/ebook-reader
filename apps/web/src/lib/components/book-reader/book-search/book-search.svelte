@@ -20,6 +20,8 @@
   let totalMatchCount = 0;
   let isNavigating = false; // Lock to prevent race conditions
   let navigationTimeoutId: number | undefined;
+  let lastNavigationTime = 0;
+  const NAVIGATION_DEBOUNCE_MS = 400; // Minimum time between navigation attempts
 
   const highlightClass = 'ttu-search-highlight';
   const currentClass = 'ttu-search-current';
@@ -41,6 +43,7 @@
     const onSectionChange = () => {
       if (!query.trim()) return;
       // After navigation, re-highlight in the newly rendered section and jump
+      // Use longer delay to ensure DOM is fully settled after page load
       setTimeout(() => {
         highlightAll();
         if (results.length) {
@@ -49,8 +52,11 @@
           scrollToCurrent(true);
         }
         pendingNavDirection = 0;
-        releaseNavigationLock(); // Release navigation lock
-      }, 0);
+        // Add additional delay before releasing lock to ensure rendering is complete
+        setTimeout(() => {
+          releaseNavigationLock();
+        }, 100);
+      }, 150);
     };
 
     const releaseNavigationLock = () => {
@@ -242,6 +248,13 @@
   }
 
   function next() {
+    // Debounce: prevent navigation if called too soon after last navigation
+    const now = Date.now();
+    if (now - lastNavigationTime < NAVIGATION_DEBOUNCE_MS) {
+      return;
+    }
+    lastNavigationTime = now;
+
     if (isNavigating) return; // Prevent rapid clicking race conditions
 
     if (results.length && currentIndex >= 0) {
@@ -266,6 +279,13 @@
   }
 
   function prev() {
+    // Debounce: prevent navigation if called too soon after last navigation
+    const now = Date.now();
+    if (now - lastNavigationTime < NAVIGATION_DEBOUNCE_MS) {
+      return;
+    }
+    lastNavigationTime = now;
+
     if (isNavigating) return; // Prevent rapid clicking race conditions
 
     if (results.length && currentIndex >= 0) {
