@@ -18,6 +18,7 @@
   let pendingNavDirection: 1 | -1 | 0 = 0;
   let allSections: Element[] = [];
   let totalMatchCount = 0;
+  let isNavigating = false; // Lock to prevent race conditions
 
   const highlightClass = 'ttu-search-highlight';
   const currentClass = 'ttu-search-current';
@@ -47,6 +48,7 @@
           scrollToCurrent(true);
         }
         pendingNavDirection = 0;
+        isNavigating = false; // Release navigation lock
       }, 0);
     };
     document.addEventListener(SECTION_CHANGE, onSectionChange, false);
@@ -191,6 +193,15 @@
       currentIndex = 0;
       updateCurrent();
       scrollToCurrent(false);
+    } else if (totalMatchCount > 0 && !isNavigating) {
+      // Current section has no results, but other sections do - auto-navigate to first match
+      currentIndex = -1;
+      if (navigateToSectionWithMatch(1)) {
+        pendingNavDirection = 1;
+        isNavigating = true;
+      }
+    } else {
+      currentIndex = -1;
     }
   }
 
@@ -221,6 +232,8 @@
   }
 
   function next() {
+    if (isNavigating) return; // Prevent rapid clicking race conditions
+
     if (results.length && currentIndex >= 0) {
       const wasLast = currentIndex === results.length - 1;
       if (!wasLast) {
@@ -234,10 +247,13 @@
     // At last result in section or no results - try next section
     if (navigateToSectionWithMatch(1)) {
       pendingNavDirection = 1;
+      isNavigating = true;
     }
   }
 
   function prev() {
+    if (isNavigating) return; // Prevent rapid clicking race conditions
+
     if (results.length && currentIndex >= 0) {
       const wasFirst = currentIndex === 0;
       if (!wasFirst) {
@@ -251,6 +267,7 @@
     // At first result in section or no results - try previous section
     if (navigateToSectionWithMatch(-1)) {
       pendingNavDirection = -1;
+      isNavigating = true;
     }
   }
 
